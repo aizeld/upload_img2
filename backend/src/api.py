@@ -8,7 +8,7 @@ def get_test_data_for_image_upload():
     data = {
         'date': '2023-07-14',
         'context': json.dumps({
-            "field_id": 59158
+            "field_id": 80254
         }),
         'map_type': 'NDWI',  # NDVI, AVI, NDWI, OSAVI, VARI, RGB, dem, ortho
         'map_info': json.dumps({
@@ -170,7 +170,20 @@ class Api:
                         return {"error": f"Request failed with details {response.status}", "status_code": response.status}
         except aiohttp.ClientError as e:
             return {"error": str(e)}
-        
+    
+    
+    @staticmethod
+    async def request_form(data, url: str, method: str , headers: dict = {}) -> dict:
+        try:
+            async with aiohttp.ClientSession() as session:
+                async with session.request(method, url, data=data, headers=headers) as response:
+                    if response.status in (201, 200):
+                        return {"data" : response.json(), "status_code": response.status}
+                    else:
+                        return {"message": f"request details {response}", "status_code": response.status}
+                    
+        except aiohttp.ClientError as e:
+            return {"error": str(e)}
         
     @staticmethod
     async def login(username: str, password: str, remember: bool = False) -> dict:
@@ -240,32 +253,40 @@ class Api:
 
         data_to_upload = FormData()
         data_to_upload.add_field("company_id", company_id)
-        for key, value in test_data.items():
-            data_to_upload.add_field(key, str(value))  # Convert value to string before adding
-        data_to_upload.add_field("file", file)
 
+        
+        for key, value in test_data.items():
+            data_to_upload.add_field(key, str(value))
+        data_to_upload.add_field("file", file)
+     
         headers = {
             "Authorization": f"Bearer {access_token}"
         }
 
-        response = await Api.request(url=url, method="POST", data=data_to_upload, headers=headers)
-        if response.get('status_code') not in (200, 201):
-                print(response)
-                error_message = response.get('error', 'Unknown error')
-                return {
+        response = await Api.request_form(url=url, method="POST", data=data_to_upload, headers=headers)
+        
+        
+        
+        if response.get('status_code') in (201, 200):
+            return {"message": "sucessfuly uploaded", "status_code": response.get('status_code')}
+        
+        else:
+            print(response)
+            error_message = response.get('message', 'Unknown error')
+            return {
                     "error": error_message,
                     "status_code": response.get('status_code'),
                 }
-        return {'data': response, 'status_code': 200}
+            
 
     
     
     @staticmethod
     async def test():
-        login = "username"
-        password = "password"
-        COMPANY_ID = 807
-        file_path = '/home/mxl/Documents/14072023_59158r2_NDVI_P20160317_S2A.png'
+        login = "intern@on-track.ai"
+        password = "Intern123"
+        COMPANY_ID = "1093"
+        file_path = 'C:/Users/Asilk/Desktop/work/14072023_59158r2_NDVI_P20160317_S2A.png'
         
         token_response = await Api.login(login, password, False)
         if 'error' in token_response:

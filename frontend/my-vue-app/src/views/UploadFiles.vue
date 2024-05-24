@@ -25,8 +25,8 @@
         </ul>
       </div>
       <div v-if="uploadResponse !== null" class="upload-response">
-        <p v-if="uploadResponse.status_code === 200" class="success">Успешно отправлено!</p>
-        <p v-else class="error">Ошибка {{ uploadResponse.error.error }}</p>
+        <p v-if="uploadResponse.status_code === 201" class="success">Успешно отправлено!</p>
+        <p v-else class="error">Ошибка {{ uploadResponse.error.message }}</p>
         <p>Статус код : {{ uploadResponse.status_code }}</p>
       </div>
     </div>
@@ -60,17 +60,18 @@
           "Content-Type": "multipart/form-data",
         },
       });
+
   
       uploadResponse.value = {
-        status_code: response.status_code,
-        data: response.data,
+        status_code: response.status,
+        data: response.message,
       };
       files.value = [];
     } catch (error) {
       if (error.response && error.response.data) {
         uploadResponse.value = {
           status_code: error.response.status,
-          error: error.response.data,
+          error: error.response.message,
         };
       } else {
         uploadResponse.value = { status_code: 500, error: "Upload failed" };
@@ -88,6 +89,9 @@
     margin-bottom: 20px;
   }
   
+  .success {
+    color: #28a745;
+  }
   
   .error {
     color: red;
