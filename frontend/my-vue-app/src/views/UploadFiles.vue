@@ -16,24 +16,44 @@
       <div v-if="files" class="files-container">
         <p>
           Вы выбрали:
-          <b>{{ `${files.length} ${files.length === 1 ? "file" : "files"}` }}</b>
+          <b>{{ `${files.length} ${files.length === 1 ? "Файл" : "Файлов"}` }}</b>
         </p>
         <ul>
+
           <li v-for="file of files" :key="file.name">
             {{ file.name }}
+            <div class="loading-bar" :class="[uploadResponse && uploadResponse.status_code === 201 ? 'upload-complete' : (uploadResponse && uploadResponse.status_code !== 201 ? 'upload-error' : '')]"></div>
           </li>
         </ul>
       </div>
+
+
+
+      <!-- <div v-if="files" class="files-container">
+        <p>
+          You have selected:
+          <b>{{ `${files.length} ${files.length === 1 ? "file" : "files"}` }}</b>
+        </p>
+        <ul>
+          <li v-for="(file, index) in files" :key="file.name">
+            {{ file.name }}
+            <div class="loading-bar" :class="{ 'upload-complete': uploadResponses[index] && uploadResponses[index].status_code === 201 }"></div>
+          </li>
+        </ul>
+      </div> -->
+
+
+
       <div v-if="uploadResponse !== null" class="upload-response">
         <p v-if="uploadResponse.status_code === 201" class="success">Успешно отправлено!</p>
-        <p v-else class="error">Ошибка {{ uploadResponse.error.message }}</p>
+        <p v-else class="error">Ошибка {{ uploadResponse.error }}</p>
         <p>Статус код : {{ uploadResponse.status_code }}</p>
       </div>
     </div>
   </template>
   <script setup>
   import  axios from "axios";
-  import { ref } from "vue";
+  import { ref, watch } from "vue";
   import { useFileDialog } from "@vueuse/core";
   
   const { files, open, reset } = useFileDialog();
@@ -41,6 +61,13 @@
   const companyId = ref("");
   const uploadResponse = ref(null);
   
+
+
+  watch(files, () => {
+  // Clear the upload response when new files are selected
+  uploadResponse.value = null;
+});
+
   const handleSubmit = async () => {
   
     if (!files) { // Check if files is null or no files selected
@@ -61,7 +88,9 @@
         },
       });
 
-  
+      console.log(response);
+
+
       uploadResponse.value = {
         status_code: response.status,
         data: response.message,
@@ -70,15 +99,17 @@
     } catch (error) {
       if (error.response && error.response.data) {
         uploadResponse.value = {
-          status_code: error.response.status,
-          error: error.response.message,
+          status_code: error.response.status || 500,
+          error: error.response.message || "Не удалось отправить файл",
         };
       } else {
-        uploadResponse.value = { status_code: 500, error: "Upload failed" };
+        uploadResponse.value = { status_code: 500, error: "Не удалось отправить файл" };
       }
     }
   };
   </script>
+
+  
   <style>
   
   .form-container {
@@ -105,4 +136,26 @@
     75% { transform: translateX(-5px); }
     100% { transform: translateX(0); }
   }
+
+.loading-bar {
+  width: 0%;
+  height: 5px;
+  background-color: #666;
+  border-radius: 2px;
+  transition: width 0.5s ease-in-out;
+  width: 40px;
+}
+
+.upload-complete {
+  width: 40%;
+  background-color: #4CAF50;
+}
+
+.upload-error {
+  width: 20%;
+  height: 5px;
+  background-color: #ff7b07;
+  border-radius: 2px;
+  transition: width 0.5s ease-in-out;
+}
   </style>

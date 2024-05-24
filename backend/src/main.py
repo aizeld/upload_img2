@@ -80,10 +80,9 @@ async def upload(request: Request, files: list[UploadFile] = File(...), token: s
         responses.append(response)#сахраняем все респонсы, для проверки 
     
     for response in responses:
-        print(response)
         if response['status_code'] not in (201, 200):
-            print("there is no error", response)
-            return JSONResponse(content={"error": response['error']}, status_code=response["status_code"])
+            print(response)
+            return JSONResponse(content={"error": response['message']}, status_code=response["status_code"])
     print(responses[-1]["message"], responses[-1]["status_code"])
     return JSONResponse(content=responses[-1]["message"], status_code=responses[-1]["status_code"]) #если нет ошибок ни в одной, то возвращаем последний респосн
 
