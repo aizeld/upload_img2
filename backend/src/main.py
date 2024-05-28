@@ -21,6 +21,7 @@ async def get_current_user(token: str = Cookie(None)) -> str:
         raise HTTPException(status_code=401, detail="Not authenticated")
     return token
 
+
 # Логин
 @app.post("/login")
 async def login(request: Request):
