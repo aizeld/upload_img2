@@ -26,24 +26,27 @@ async def get_current_user(token: str = Cookie(None)) -> str:
 @app.post("/login")
 async def login(request: Request):
     data = await request.json()
-    username, password = data['username'], data['password']
+    username, password, remember = data['username'], data['password'], data['remember']
     
-    response = await Api.login(username, password)
+    response = await Api.login(username, password, remember)
     status_code = response.get('status_code')
-    print(status_code)
     if status_code == 200:
+        
         token = response.get('access')
-        if token:
-            response_cookie = "token"
-            response_cookie_value = token
-            response_cookie_max_age = 60 * 60  # 1час
-            # токен в куки
-            return JSONResponse(content={"token": token}, headers={"Set-Cookie": f"{response_cookie}={response_cookie_value}; Max-Age={response_cookie_max_age}"})
-        else:
-            return JSONResponse(content = {"message": "Token expired, log in again"}, status_code = status_code)
+    
+        response_cookie = "token"
+        response_cookie_value = token
+        response_cookie_max_age = 60 * 60 * 4 # 4часa
+        
+        if remember:
+            token = response.get('refresh')
+            response_cookie_max_age = 60 * 60 * 24 * 30  # 30 дней
+        # токен в куки
+        return JSONResponse(content={"token": token}, headers={"Set-Cookie": f"{response_cookie}={response_cookie_value}; Max-Age={response_cookie_max_age}"})
     else:
         print(response)
         raise HTTPException(status_code = status_code)
+        
 
 #логаут
 @app.post("/logout")
