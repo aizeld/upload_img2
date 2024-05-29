@@ -164,26 +164,14 @@ class Api:
         try:
             async with aiohttp.ClientSession() as session:
                 async with session.request(method, url, data=data, headers=headers) as response:
-                    if response.status == 200:
-                        return await response.json()
+                    if response.status in (200, 201):
+                        return {"data":await response.json(), "status_code": response.status}
                     else:
-                        return {"error": f"Request failed with details {response.status}", "status_code": response.status}
+                        return {"message": f"Request failed with details {await response.json()}", "status_code": response.status}
         except aiohttp.ClientError as e:
             return {"error": str(e)}
     
-    
-    @staticmethod
-    async def request_form(data, url: str, method: str , headers: dict = {}) -> dict:
-        try:
-            async with aiohttp.ClientSession() as session:
-                async with session.request(method, url, data=data, headers=headers) as response:
-                    if response.status in (201, 200):
-                        return {"data" : response.json(), "status_code": response.status}
-                    else:
-                        return {"message": f"request details {response}", "status_code": response.status}
-                    
-        except aiohttp.ClientError as e:
-            return {"error": str(e)}
+
         
     @staticmethod
     async def login(username: str, password: str, remember: bool = False) -> dict:
@@ -196,13 +184,17 @@ class Api:
             "Content-Type": "application/json",
         }
         response = await Api.request(url, "POST", data=json.dumps(data), headers=headers)
-        
-        if response.get('access'):
-            tokens = {'access': response.get('access'), 'status_code': 200}
+        status_code = response.get('status_code', 500)
+        if status_code in (200, 201):
+            tokens = {'access': response['data'].get('access'), 'status_code': status_code}
             if remember:
-                tokens['refresh'] = response.get('refresh')
+                tokens['refresh'] = response['data'].get('refresh')
             return tokens
-        return {"error": response.get('detail'), "status_code": response.get('status_code')}
+
+        return {
+            "error": response.get('message', 'unknown error'),
+            "status_code": status_code
+        }
 
     @staticmethod
     async def get_user(access_token: str) -> dict:
@@ -212,10 +204,10 @@ class Api:
             "Content-Type": "application/json"
         }
         response = await Api.request(url, method="GET", headers=headers)
-        
+        status_code = response.get('status_code')
         if response:
-            return {"data": response, "status_code": 200}
-        return {"error": response, "status_code": 500}
+            return {"data": response["data"], "status_code": status_code}
+        return {"error": response, "status_code": status_code}
 
     @staticmethod
     async def get_fields(access_token: str, company_id: str) -> dict:
@@ -239,7 +231,7 @@ class Api:
         }
         data_to_upload = data.update(file)
         data_to_upload = data_to_upload.update(company_id)
-        response = await Api.request_form(url, method="POST", data=data_to_upload, headers=headers)
+        response = await Api.request(url, method="POST", data=data_to_upload, headers=headers)
         if response.get('status_code') != 201:
             return {"error": response, "status_code": response.get('status_code')}
         
@@ -263,7 +255,7 @@ class Api:
             "Authorization": f"Bearer {access_token}"
         }
 
-        response = await Api.request_form(url=url, method="POST", data=data_to_upload, headers=headers)
+        response = await Api.request(url=url, method="POST", data=data_to_upload, headers=headers)
         
         
         
@@ -271,10 +263,9 @@ class Api:
             return {"message": "sucessfuly uploaded", "status_code": response.get('status_code')}
         
         else:
-            print(response)
             error_message = response.get('message', 'Unknown error')
             return {
-                    "error": error_message,
+                    "message": error_message,
                     "status_code": response.get('status_code'),
                 }
             

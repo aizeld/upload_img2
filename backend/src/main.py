@@ -29,8 +29,9 @@ async def login(request: Request):
     username, password = data['username'], data['password']
     
     response = await Api.login(username, password)
-    
-    if response.get('status_code') == 200:
+    status_code = response.get('status_code')
+    print(status_code)
+    if status_code == 200:
         token = response.get('access')
         if token:
             response_cookie = "token"
@@ -39,11 +40,10 @@ async def login(request: Request):
             # токен в куки
             return JSONResponse(content={"token": token}, headers={"Set-Cookie": f"{response_cookie}={response_cookie_value}; Max-Age={response_cookie_max_age}"})
         else:
-            return JSONResponse(content = {"message": "Token expired, log in again"}, status_code = response['status_code'])
+            return JSONResponse(content = {"message": "Token expired, log in again"}, status_code = status_code)
     else:
-        status_code=response["status_code"]
-        return JSONResponse(content={"message": "Invalid credentials", "status_code": status_code})
-
+        print(response)
+        raise HTTPException(status_code = status_code)
 
 #логаут
 @app.post("/logout")
@@ -58,7 +58,6 @@ async def logout():
 @app.get("/users/whoami")
 async def get_user(token:str = Depends(get_current_user)):
     response = await Api.get_user(token)
-    print(response)
     if "error" in response:
         raise HTTPException(status_code=response["status_code"], detail=response["error"])
     return JSONResponse(content=response["data"])
