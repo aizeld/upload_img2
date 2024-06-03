@@ -1,81 +1,78 @@
 <template>
-    <div>
-      <form @submit.prevent="handleSubmit" class="form-container">
-        <label for="company_id">Company ID:</label>
+  <div class="container my-5">
+    <form @submit.prevent="handleSubmit" class="form-container mb-4">
+      <div class="mb-3">
+        <label for="company_id" class="form-label">Company ID:</label>
         <input
           type="text"
           id="company_id"
           v-model="companyId"
+          class="form-control"
           placeholder="Enter company ID"
           required
         />
-        <button type="button" @click="open()">Выбрать файлы</button>
-        <button type="button" :disabled="!files" @click="reset()">Отменить</button>
-        <button type="submit">Отправить</button>
-      </form>
-      <div v-if="files" class="files-container">
-        <p>
-          Вы выбрали:
-          <b>{{ `${files.length} ${files.length === 1 ? "Файл" : "Файлов"}` }}</b>
-        </p>
-        <ul>
-
-          <li v-for="file of files" :key="file.name">
-            {{ file.name }}
-            <div class="loading-bar" :class="[uploadResponse && uploadResponse.status_code === 201 ? 'upload-complete' : (uploadResponse && uploadResponse.status_code !== 201 ? 'upload-error' : '')]"></div>
-          </li>
-        </ul>
       </div>
-
-
-
-      <!-- <div v-if="files" class="files-container">
-        <p>
-          You have selected:
-          <b>{{ `${files.length} ${files.length === 1 ? "file" : "files"}` }}</b>
-        </p>
-        <ul>
-          <li v-for="(file, index) in files" :key="file.name">
-            {{ file.name }}
-            <div class="loading-bar" :class="{ 'upload-complete': uploadResponses[index] && uploadResponses[index].status_code === 201 }"></div>
-          </li>
-        </ul>
-      </div> -->
-
-
-
-      <div v-if="uploadResponse !== null" class="upload-response">
-        <p v-if="uploadResponse.status_code === 201" class="success">Успешно отправлено!</p>
-        <p v-else class="error">Ошибка {{ uploadResponse.error }}</p>
-        <p>Статус код : {{ uploadResponse.status_code }}</p>
+      <div class="mb-3">
+        <button type="button" class="btn btn-primary me-2" @click="open()">Выбрать файлы</button>
+        <button type="button" class="btn btn-secondary me-2" :disabled="!files" @click="reset()" >Отменить</button>
+        <button type="submit" class="btn btn-success" >Отправить</button>
+        <button type="button" class="btn btn-info ms-2" @click="openFieldsModal">Show Fields</button>
       </div>
+    </form>
+
+    <div v-if="files" class="files-container mb-4">
+      <p>
+        Вы выбрали:
+        <b>{{ `${files.length} ${files.length === 1 ? "Файл" : "Файлов"}` }}</b>
+      </p>
+      <ul class="list-group">
+        <li v-for="file of files" :key="file.name" class="list-group-item d-flex justify-content-between align-items-center">
+          {{ file.name }}
+          <div class="loading-bar" :class="[uploadResponse && uploadResponse.status_code === 201 ? 'upload-complete' : (uploadResponse && uploadResponse.status_code !== 201 ? 'upload-error' : '')]"></div>
+
+        </li>
+      </ul>
     </div>
-  </template>
+
+<div v-if="uploadResponse !== null" class="upload-response">
+      <p v-if="uploadResponse.status_code === 201" class="alert alert-success">Успешно отправлено!</p>
+      <p v-else class="alert alert-danger">Ошибка {{ uploadResponse.error }}</p>
+      <p>Статус код : {{ uploadResponse.status_code }}</p>
+    </div>
+
+    <FieldsModal :fields="fields" ref="fieldsModal"/>
+  </div>
+</template>
+  <!-- https://blog.openreplay.com/vue-custom-drag-and-drop-file-uploading/
+   -->
+
+
   <script setup>
   import  axios from "axios";
   import { ref, watch } from "vue";
   import { useFileDialog } from "@vueuse/core";
-  
+  import FieldsModal from './FieldsModal.vue';
   const { files, open, reset } = useFileDialog();
   
   const companyId = ref("");
   const uploadResponse = ref(null);
-  
-
-
+  const fields = ref([]);
+  const fieldsModal = ref(null);
   watch(files, () => {
-  // Clear the upload response when new files are selected
   uploadResponse.value = null;
 });
 
   const handleSubmit = async () => {
-  
-    if (!files) { // Check if files is null or no files selected
-      uploadResponse.value = { status_code: 400, eror: "Нет файлов" }; // Set status code 400 for no file selected
+    if (!files.value) { // Check if files is null or no files selected
+      
+      uploadResponse.value = { status_code: 400, error: "Нет файлов" }; 
       return;
     }
+    uploadResponse.value = null;
+
+   
     const formData = new FormData();
-  
+    
     for (let i = 0; i < files.value.length; i++) {
       formData.append("files", files.value[i]);
     }
@@ -107,6 +104,36 @@
       }
     }
   };
+
+
+const fetchFields = async () => {
+  try {
+    const response = await axios.get("/get_fields", {
+      headers: {
+        "Content-Type": "application/json", },
+      params: { company_id: companyId.value },
+    });
+    if (response.status === 200) {
+      fields.value = response.data.data;
+    } else {
+      fields.value = [];
+      alert("Failed to fetch fields");
+    }
+  } catch (error) {
+    fields.value = [];
+    alert("Error fetching fields");
+  }
+};
+
+const openFieldsModal = async () => {
+  await fetchFields();
+  fieldsModal.value.show();
+};
+
+
+
+
+
   </script>
 
   
@@ -144,18 +171,25 @@
   border-radius: 2px;
   transition: width 0.5s ease-in-out;
   width: 40px;
+  max-width: 150px;
 }
 
 .upload-complete {
   width: 40%;
   background-color: #4CAF50;
+
 }
 
 .upload-error {
-  width: 20%;
+  width: 10%;
   height: 5px;
   background-color: #ff7b07;
   border-radius: 2px;
   transition: width 0.5s ease-in-out;
+}
+
+.loading-bar.hide {
+  width: 0%;
+  transition: width 0.1s ease-in-out; /* Fast disappearance */
 }
   </style>

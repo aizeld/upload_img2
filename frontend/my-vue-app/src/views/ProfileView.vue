@@ -14,7 +14,7 @@
   <script>
   import { defineComponent, computed, onMounted } from 'vue';
   import { useStore } from 'vuex';
-  
+
   export default defineComponent({
     name: 'ProfileView',
     setup() {

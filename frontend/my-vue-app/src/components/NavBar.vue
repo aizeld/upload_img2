@@ -35,6 +35,7 @@
   </template>
   
   <script>
+
   import { defineComponent, computed } from 'vue';
   import { useStore } from 'vuex';
   import { useRouter } from 'vue-router';
@@ -58,6 +59,8 @@
       };
     }
   });
+
+
   </script>
   
   <style scoped>

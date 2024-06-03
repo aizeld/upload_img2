@@ -26,7 +26,7 @@ async def get_current_user(token: str = Cookie(None)) -> str:
 @app.post("/login")
 async def login(request: Request):
     data = await request.json()
-    username, password, remember = data['username'], data['password'], data['remember']
+    username, password, remember = data['username'], data['password'], data.get('remember', False)
     
     response = await Api.login(username, password, remember)
     status_code = response.get('status_code')
@@ -88,6 +88,23 @@ async def upload(request: Request, files: list[UploadFile] = File(...), token: s
             return JSONResponse(content={"error": response['message']}, status_code=response["status_code"])
     print(responses[-1]["message"], responses[-1]["status_code"])
     return JSONResponse(content=responses[-1]["message"], status_code=responses[-1]["status_code"]) #если нет ошибок ни в одной, то возвращаем последний респосн
+
+
+
+@app.get("/get_fields")
+async def get_field(company_id:str ,token : str = Depends(get_current_user)):
+    print("shit",company_id)
+    response = await Api.get_fields(token, company_id)
+    status_code = response.get('status_code')
+    
+    if status_code == 200:
+        print(response['data'])
+        return JSONResponse(content = response["data"], status_code = status_code) 
+    return HTTPException(status_code = status_code, detail = response["error"])
+       
+        
+    
+
 
 # Запуск 
 if __name__ == "__main__":
