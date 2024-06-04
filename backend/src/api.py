@@ -155,8 +155,47 @@ def get_test_data_for_image_upload():
     }
     return data
 
+
+from datetime import datetime 
+def get_gis_data():
+    curr_date = datetime.now()
+    formatted_date = curr_date.strftime("%Y-%m-%d")
+    data = {       
+        'date': f'{formatted_date}',
+        'map_type': 'NDWI',  # NDVI, AVI, NDWI, OSAVI, VARI, RGB, dem, ortho
+        'map_info': json.dumps({
+            "version": 0,  # always 0
+            "satellite": "S2A"  # 'S2A', 'LC8', 'LC9', 'S2B', 'PLA'
+        }),
+        'metrics': json.dumps({"avg_value": 32,
+                               "variability": [0.8353, 56.0, 98.0],
+                               "distribution": [{"area": 0.0019, "value": 1}, {"area": 0.0001, "value": 2},
+                                                {"area": 0.0001, "value": 3}, {"area": 0.0002, "value": 4},
+                                                {"area": 0.0001, "value": 5}, {"area": 0.0001, "value": 6},
+                                                {"area": 0.0001, "value": 7}, {"area": 0.0001, "value": 8},
+                                                {"area": 0.0004, "value": 10}, {"area": 0.0004, "value": 11},
+                                                {"area": 0.0002, "value": 12}, {"area": 0.0003, "value": 13},
+                                                {"area": 0.0009, "value": 14}, {"area": 0.0007, "value": 15},
+                                                {"area": 0.0019, "value": 16}, {"area": 0.0017, "value": 17},
+                                                {"area": 0.0022, "value": 18}, {"area": 0.0029, "value": 19},
+                                                {"area": 0.0047, "value": 20}, {"area": 0.005, "value": 21},
+                                                {"area": 0.0115, "value": 22}, {"area": 0.0084, "value": 23},
+                                                {"area": 0.0171, "value": 24}, {"area": 0.014, "value": 25},
+                                                {"area": 0.0286, "value": 26}, {"area": 0.0243, "value": 27},
+                                                {"area": 0.0487, "value": 28}, {"area": 0.0464, "value": 29},
+                                                {"area": 0.0878, "value": 30}, {"area": 0.0704, "value": 31},
+                                                {"area": 0.1255, "value": 32}, {"area": 0.0872, "value": 33},
+                                                {"area": 0.1243, "value": 34}, {"area": 0.0681, "value": 35},
+                                                {"area": 0.0772, "value": 36}, {"area": 0.0392, "value": 37},
+                                                {"area": 0.0478, "value": 38}, {"area": 0.0241, "value": 39},
+                                                {"area": 0.0195, "value": 40}, {"area": 0.0025, "value": 41},
+                                                {"area": 0.0026, "value": 42}, {"area": 0.0005, "value": 43}],
+                               "cloud_coverage": 0.0})}
+    return data
+    
+
 class Api:
-    __url = "https://dev1.agroonline.kz/api"  # Замените на ваш базовый URL        
+    __url = "https://dev1.agroonline.kz/api"          
         
     
     @staticmethod
@@ -165,7 +204,7 @@ class Api:
             async with aiohttp.ClientSession() as session:
                 async with session.request(method, url, data=data, headers=headers) as response:
                     if response.status in (200, 201):
-                        return {"data":await response.json(), "status_code": response.status}
+                        return {"data": await response.json(), "status_code": response.status}
                     else:
                         return {"message": f"Request failed with details {await response.json()}", "status_code": response.status}
         except aiohttp.ClientError as e:
@@ -223,19 +262,19 @@ class Api:
         
         return {'data': response, "status_code": 200}
 
-    @staticmethod
-    async def upload_image(data, access_token: str, company_id: str, file: dict,) -> dict:
-        url = f"{Api.__url}/company/{company_id}/maps/satellites/upload/"
-        headers = {
-            "Authorization": f"Bearer {access_token}"
-        }
-        data_to_upload = data.update(file)
-        data_to_upload = data_to_upload.update(company_id)
-        response = await Api.request(url, method="POST", data=data_to_upload, headers=headers)
-        if response.get('status_code') != 201:
-            return {"error": response, "status_code": response.get('status_code')}
+    # @staticmethod
+    # async def upload_image(data, access_token: str, company_id: str, file: dict,) -> dict:
+    #     url = f"{Api.__url}/company/{company_id}/maps/satellites/upload/"
+    #     headers = {
+    #         "Authorization": f"Bearer {access_token}"
+    #     }
+    #     data_to_upload = data.update(file)
+    #     data_to_upload = data_to_upload.update(company_id)
+    #     response = await Api.request(url, method="POST", data=data_to_upload, headers=headers)
+    #     if response.get('status_code') != 201:
+    #         return {"error": response, "status_code": response.get('status_code')}
         
-        return {'data': response, 'status_code': 201}
+    #     return {'data': response, 'status_code': 201}
 
 
     @staticmethod
@@ -258,20 +297,54 @@ class Api:
         response = await Api.request(url=url, method="POST", data=data_to_upload, headers=headers)
         
         
-        
-        if response.get('status_code') in (201, 200):
-            return {"message": "sucessfuly uploaded", "status_code": response.get('status_code')}
-        
+        status_code = response.get('status_code')
+        if status_code == 201:
+            return {"message": "Sucessfully uploaded", "status_code": status_code}
         else:
-            error_message = response.get('message', 'Unknown error')
             return {
-                    "message": error_message,
-                    "status_code": response.get('status_code'),
-                }
+                "message": response.get('message', "Unknown error"),
+                "status_code": status_code,
+            }
             
+    @staticmethod
+    async def image_upload(form: FormData, access_token: str, file):
+        company_id = form.get('company_id')
+        shape = form.get("shape")
+        context = form.get("context")
+        
 
+        gis_data = get_gis_data()
+        url = f"{Api.__url}/company/{company_id}/maps/satellites/upload/"
     
-    
+        headers = {
+            "Authorization" : F"Bearer {access_token}"
+        } 
+        form_upload = FormData() #пришлось создать новую форм дату ибо, add_field почему то не работал с формдаты которая с фронтенда, костыль понимаю
+        
+        for key, value in gis_data.items():
+            form_upload.add_field(key, str(value))
+            
+            
+        form_upload.add_field("company_id", company_id)
+        form_upload.add_field("context", context)
+        form_upload.add_field("shape",  shape)
+        form_upload.add_field('file', file)
+        
+        print(form_upload)
+        
+        response = await Api.request(url = url, method="POST", data = form_upload, headers = headers)
+
+        status_code = response.get('status_code')
+        if status_code == 201:
+            return {"message": "Sucessfully uploaded", "status_code": status_code}
+        else:
+            return {
+                "message": response.get('message', "Unknown error"),
+                "status_code": status_code,
+            }
+            
+            
+            
     @staticmethod
     async def test():
         login = "intern@on-track.ai"

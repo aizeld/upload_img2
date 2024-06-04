@@ -11,8 +11,16 @@
               <div class="row">
                 <div class="col">
                   <ul class="list-group">
-                    <li v-for="field in fields" :key="field.id" class="list-group-item">
-                      <p class="mb-1"><strong>ID:</strong> {{ field.id }}</p>                
+                    <li
+                      v-for="field in fields"
+                      :key="field.id"
+                      class="list-group-item"
+                      :class="{ 'list-group-item-primary': selectedField === field }"
+                      @click="selectField(field)"
+                      style="cursor: pointer;"
+                      @dblclick="confirmSelection(field)"
+                    >
+                      <p class="mb-1"><strong>ID:</strong> {{ field.id }}</p>
                       <p class="mb-1"><strong>Title:</strong> {{ field.title }}</p>
                       <p class="mb-1"><strong>Type:</strong> {{ field.field_type }}</p>
                       <p class="mb-1"><strong>Cluster:</strong> {{ field.cluster }}</p>
@@ -32,6 +40,7 @@
           </div>
           <div class="modal-footer">
             <button type="button" class="btn btn-secondary" @click="hide">Close</button>
+            <button type="button" class="btn btn-primary" :disabled="!selectedField" @click="confirmSelection">Select</button>
           </div>
         </div>
       </div>
@@ -44,6 +53,9 @@
   
   const props = defineProps(['fields']);
   const modalInstance = ref(null);
+  const selectedField = ref(null);
+  const emit = defineEmits(['fieldSelected']);
+
   
   watch(() => props.fields, () => {
     if (modalInstance.value) {
@@ -64,9 +76,23 @@
     }
   };
   
+  const selectField = (field) => {
+    selectedField.value = field;
+  };
+  
+  const confirmSelection = () => {
+    if (selectedField.value) {
+      hide();
+      emit('fieldSelected', selectedField.value);
+    }
+  };
+  
   defineExpose({ show });
   </script>
   
   <style scoped>
+  .list-group-item-primary {
+    background-color: #cce5ff;
+  }
   </style>
   
