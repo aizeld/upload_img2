@@ -5,6 +5,7 @@ import HomeView from '../views/HomeView.vue';
 import store from '../store/index.js';
 import ProfileView from '../views/ProfileView.vue';
 import UploadTest from '../views/UploadTest.vue';
+import UploadMega from '../views/UploadMega.vue';
 const routes = [
   {
     path: '/login',
@@ -23,6 +24,14 @@ const routes = [
     component: UploadTest,
     meta: { requiresAuth: true }
   },
+
+{
+    path: '/upload_mega',
+    name: 'Upload_mega',
+    component: UploadMega,
+    // meta: { requiresAuth: true }
+  },
+
   {
     path:'/profile',
     name: 'Profile',

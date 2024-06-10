@@ -39,7 +39,7 @@
             </div>
           </div>
           <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" @click="hide">Close</button>
+            <button type="button" class="btn btn-secondary" @click="terminate" >Отменить</button>
             <button type="button" class="btn btn-primary" :disabled="!selectedField" @click="confirmSelection">Select</button>
           </div>
         </div>
@@ -69,6 +69,14 @@
     }
     modalInstance.value.show();
   };
+
+
+  const terminate= ()=>{
+    if (modalInstance.value){
+      modalInstance.value.hide()
+      selectedField.value = null;
+    }
+  }
   
   const hide = () => {
     if (modalInstance.value) {

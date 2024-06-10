@@ -13,7 +13,6 @@
           <button type="submit" class="btn btn-success me-2" :disabled="!files">Отправить</button>
         </div>
         <input type="file" ref="fileInput" id="file_input" accept=".json" style="display: none" @change="handleFileUpload">
-        <button type="button" class="btn btn-primary me-2" @click="openFileInput()">Выгрузить json</button>
 
       </form>
       
@@ -31,16 +30,18 @@
             <div class="loading-bar"
               :class="[uploadResponse && uploadResponse.status_code === 201 ? 'upload-complete' : (uploadResponse && uploadResponse.status_code !== 201 ? 'upload-error' : '')]">
             </div>
-            
+            <button type="button" class="btn btn-primary me-2" @click="openFileInput()">Выгрузить json</button>
+            <div class="mb-3">
+                <label for="json_data" class="form-label">JSON Data:</label>
+                <textarea id="json_data" v-model="jsonData" class="form-control" placeholder="Enter JSON data" required></textarea>
+              </div>
+        
           </li>
+          
         </ul>
       </div>
   
-      <div class="mb-3">
-        <label for="json_data" class="form-label">JSON Data:</label>
-        <textarea id="json_data" v-model="jsonData" class="form-control" placeholder="Enter JSON data" required></textarea>
-      </div>
-
+     
       <div v-if="uploadResponse !== null" class="upload-response">
         <p v-if="uploadResponse.status_code === 201" class="alert alert-success">Успешно отправлено!</p>
         <p v-else class="alert alert-danger">Ошибка {{ uploadResponse.error }}</p>
