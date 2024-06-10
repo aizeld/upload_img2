@@ -79,7 +79,7 @@
 
 
   const openFileInput = () => {
-  // Trigger file input click programmatically
+  // Trigger file input click 
   const fileInput = document.getElementById("file_input");
   fileInput.click();
 };
@@ -88,7 +88,6 @@ const handleFileUpload = (event) => {
   const uploadedFiles = event.target.files;
   // Update files value with uploaded files
   files.value = uploadedFiles;
-  // If JSON file is uploaded, read its content
   const jsonFile = Array.from(uploadedFiles).find(file => file.type === "application/json");
   if (jsonFile) {
     uploadResponse.value = null;
@@ -97,9 +96,11 @@ const handleFileUpload = (event) => {
       jsonData.value = e.target.result;
     };
     reader.readAsText(jsonFile);
+    
   }else{
     uploadResponse.value = {status_code : 400, error: "Неправильный json"}
   }
+ 
 };
 
 
@@ -107,6 +108,8 @@ const handleFileUpload = (event) => {
 
 
   const handleSubmit = async () => {
+
+    console.log(jsonData.value)
     if (!files.value) { // Check if files is null or no files selected
   
       uploadResponse.value = { status_code: 400, error: "Нет файлов" };
@@ -119,10 +122,12 @@ const handleFileUpload = (event) => {
     }
 
     if(!jsonData.value){
-      uploadResponse.value = {status_code: 400, erorr: "Нет json"}
+      uploadResponse.value = {status_code: 400, error: "Нет json"}
       return;
     }
   
+    
+    
 
     uploadResponse.value = null;
     
@@ -133,9 +138,32 @@ const handleFileUpload = (event) => {
       formData.append("files", files.value[i]);
     }
 
+
+    let parsedJsonData;
+  try {
+    parsedJsonData = JSON.parse(jsonData.value);
+  } catch (error) {
+    uploadResponse.value = { status_code: 400, error: "Неправильный формат JSON" };
+    return;
+  }
+
+    for (const key in parsedJsonData) {
+    if (parsedJsonData.hasOwnProperty(key)) {
+      const value = parsedJsonData[key];
+      if (typeof value === "object") {
+        // If the value is an object, we need to stringify it
+        formData.append(key, JSON.stringify(value));
+      } else {
+        formData.append(key, value);
+      }
+    }
+  }
+
     formData.append("company_id", companyId.value);
     formData.append("context", JSON.stringify({"field_id" : selectedField.value.id}))
- 
+    
+    console.log(formData)
+
     formData.append("shape", JSON.stringify({"type": selectedField.value.shape_gis.type,
                              "coordinates": selectedField.value.shape_gis.coordinates}))
     
@@ -191,7 +219,7 @@ const handleFileUpload = (event) => {
   
   const openFieldsModal = async () => {
     if (companyId.value !== lastFetchedCompanyId.value) {
-      // Fetch fields only if company ID has changed since the last fetch
+      // Fetch fields only if company ID has changed since the last fetch, it saves so much resourcec
       await fetchFields();
     }
     fieldsModal.value.show();

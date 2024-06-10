@@ -262,49 +262,41 @@ class Api:
         
         return {'data': response, "status_code": 200}
 
-    # @staticmethod
-    # async def upload_image(data, access_token: str, company_id: str, file: dict,) -> dict:
-    #     url = f"{Api.__url}/company/{company_id}/maps/satellites/upload/"
-    #     headers = {
-    #         "Authorization": f"Bearer {access_token}"
-    #     }
-    #     data_to_upload = data.update(file)
-    #     data_to_upload = data_to_upload.update(company_id)
-    #     response = await Api.request(url, method="POST", data=data_to_upload, headers=headers)
-    #     if response.get('status_code') != 201:
-    #         return {"error": response, "status_code": response.get('status_code')}
-        
-    #     return {'data': response, 'status_code': 201}
 
 
     @staticmethod
-    async def upload_image_test(access_token, file, company_id) -> dict:
+    async def image_upload_test(form: FormData, access_token: str, file):
+        # Prepare upload URL and headers
+        company_id = form.get('company_id')
         url = f"{Api.__url}/company/{company_id}/maps/satellites/upload/"
-        test_data = get_test_data_for_image_upload()
-
-        data_to_upload = FormData()
-        data_to_upload.add_field("company_id", company_id)
-
-        
-        for key, value in test_data.items():
-            data_to_upload.add_field(key, str(value))
-        data_to_upload.add_field("file", file)
-     
         headers = {
             "Authorization": f"Bearer {access_token}"
         }
+        fields = ["map_info", "date", "map_type", "metrics", "context", "shape"]
+    
+        form_upload = FormData()
+    
+    
+        for field in fields:
+            value = form.get(field)
+            if value:
+                form_upload.add_field(field, value)
+                
+                
+        form_upload.add_field('file', file)
 
-        response = await Api.request(url=url, method="POST", data=data_to_upload, headers=headers)
-        
-        
+       
+
+   
+        response = await Api.request(url=url, method="POST", data=form_upload, headers=headers)
+
+  
         status_code = response.get('status_code')
-        if status_code == 201:
-            return {"message": "Sucessfully uploaded", "status_code": status_code}
-        else:
-            return {
-                "message": response.get('message', "Unknown error"),
-                "status_code": status_code,
-            }
+        return {
+            "message": "Successfully uploaded" if status_code == 201 else response.get('message', "Unknown error"),
+            "status_code": status_code
+        }
+
             
     @staticmethod
     async def image_upload(form: FormData, access_token: str, file):
@@ -335,13 +327,10 @@ class Api:
         response = await Api.request(url = url, method="POST", data = form_upload, headers = headers)
 
         status_code = response.get('status_code')
-        if status_code == 201:
-            return {"message": "Sucessfully uploaded", "status_code": status_code}
-        else:
-            return {
-                "message": response.get('message', "Unknown error"),
-                "status_code": status_code,
-            }
+        return {
+            "message": "Successfully uploaded" if status_code == 201 else response.get('message', "Unknown error"),
+            "status_code": status_code
+        }
             
             
             

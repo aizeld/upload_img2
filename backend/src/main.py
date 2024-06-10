@@ -80,28 +80,26 @@ async def get_user(token:str = Depends(get_current_user)):
 
 
 # для загрузки файлов
-@app.post("/upload")
-async def upload(request: Request, files: list[UploadFile] = File(...), token: str = Depends(get_current_user)):
-    form = await request.form()
-    print(form)
-    company_id = form.get("company_id")
-    print(company_id)
+@app.post("/upload_test")
+async def upload_test(request : Request, files : list[UploadFile] = File(...), token: str = Depends(get_current_user)):
+    form = await request.form() 
     responses = []
     for file in files:
-        contents = await file.read() 
+        contents = await file.read()
         print(file.filename)
-        response = await Api.upload_image_test(access_token=token, company_id=company_id, file=contents) 
-        responses.append(response)#сахраняем все респонсы, для проверки 
+        response = await Api.image_upload_test(access_token=token, form=form, file = contents)
+        responses.append(response)
     
     for response in responses:
         if response['status_code'] not in (201, 200):
             print(response)
             return JSONResponse(content={"error": response['message']}, status_code=response["status_code"])
+            
     print(responses[-1]["message"], responses[-1]["status_code"])
-    return JSONResponse(content=responses[-1]["message"], status_code=responses[-1]["status_code"]) #если нет ошибок ни в одной, то возвращаем последний респосн
+    return JSONResponse(content = responses[-1]["message"], status_code = responses[-1]["status_code"]) #если нет ошибок ни в одной, то возвращаем последний респосн
 
-@app.post("/upload_test")
-async def upload_test(request : Request, files : list[UploadFile] = File(...), token: str = Depends(get_current_user)):
+@app.post("/upload")
+async def upload(request : Request, files : list[UploadFile] = File(...), token: str = Depends(get_current_user)):
     form = await request.form() 
     responses = []
     for file in files:

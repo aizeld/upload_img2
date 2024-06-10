@@ -4,7 +4,7 @@ import UploadFiles from '../views/UploadFiles.vue'
 import HomeView from '../views/HomeView.vue';
 import store from '../store/index.js';
 import ProfileView from '../views/ProfileView.vue';
-import UploadTest from '../views/UploadTest.vue';
+
 import UploadMega from '../views/UploadMega.vue';
 const routes = [
   {
@@ -18,18 +18,13 @@ const routes = [
     component: UploadFiles,
     meta: { requiresAuth: true }
   },
-  {
-    path: '/upload_test',
-    name: 'Upload_test',
-    component: UploadTest,
-    meta: { requiresAuth: true }
-  },
+ 
 
 {
     path: '/upload_mega',
     name: 'Upload_mega',
     component: UploadMega,
-    // meta: { requiresAuth: true }
+    meta: { requiresAuth: true }
   },
 
   {
