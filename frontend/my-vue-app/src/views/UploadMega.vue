@@ -61,6 +61,7 @@
   import { useFileDialog } from "@vueuse/core";
   import FieldsModal from './FieldsModal.vue';
   const { files, open, reset } = useFileDialog();
+  
   const lastFetchedCompanyId = ref(null);
   const companyId = ref("");
   const uploadResponse = ref(null);

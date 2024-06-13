@@ -3,8 +3,13 @@
       <div class="modal-dialog modal-lg">
         <div class="modal-content">
           <div class="modal-header">
-            <h5 class="modal-title" id="fieldsModalLabel">Fields Data</h5>
-            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            
+              <h5 class="modal-title" id="fieldsModalLabel">Fields Data</h5>
+              <div class="ms-auto d-flex align-items-center">
+                <button type="button" class="btn btn-primary me-2" @click="selectAll">Select All</button>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+              </div>
+
           </div>
           <div class="modal-body">
             <div v-if="fields">
@@ -63,7 +68,7 @@
     }
   });
   
-  const show = () => {
+  const show = async () => {
     if (!modalInstance.value) {
       modalInstance.value = new Modal(document.getElementById('fieldsModal'), {});
     }
@@ -71,7 +76,7 @@
   };
 
 
-  const terminate= ()=>{
+  const terminate= async()=>{
     if (modalInstance.value){
       modalInstance.value.hide()
       selectedField.value = null;
@@ -83,7 +88,10 @@
       modalInstance.value.hide();
     }
   };
-  
+  const selectAll = () => {
+  emit('fieldSelected', props.fields); 
+  hide(); 
+}
   const selectField = (field) => {
     selectedField.value = field;
   };

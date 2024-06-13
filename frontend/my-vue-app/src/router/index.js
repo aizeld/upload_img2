@@ -6,6 +6,9 @@ import store from '../store/index.js';
 import ProfileView from '../views/ProfileView.vue';
 
 import UploadMega from '../views/UploadMega.vue';
+import UploadFinal from '../views/UploadFinal.vue';
+
+
 const routes = [
   {
     path: '/login',
@@ -26,6 +29,14 @@ const routes = [
     component: UploadMega,
     meta: { requiresAuth: true }
   },
+
+  {
+    path: '/upload_final',
+    name: 'Upload_final',
+    component: UploadFinal,
+    meta: { requiresAuth: true }
+  },
+
 
   {
     path:'/profile',

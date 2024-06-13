@@ -4,10 +4,13 @@ import uvicorn
 import json
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from aiohttp import FormData
+from datetime import datetime 
 
 
 # Настройка 
 app = FastAPI()
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://localhost:8080"], #for frontend
@@ -84,10 +87,39 @@ async def get_user(token:str = Depends(get_current_user)):
 async def upload_test(request : Request, files : list[UploadFile] = File(...), token: str = Depends(get_current_user)):
     form = await request.form() 
     responses = []
-    for file in files:
-        contents = await file.read()
+    json_contents = json.loads(form.get("json"))
+    company_id=form.get('company_id')
+    
+    context = form.get("context")
+    shape = form.get("shape")
+    
+    
+    
+    curr_date = datetime.now()
+    formatted_date = curr_date.strftime("%Y-%m-%d")
+
+    for i, file in enumerate(files):
         print(file.filename)
-        response = await Api.image_upload_test(access_token=token, form=form, file = contents)
+        print(json_contents[i])
+        
+        json_cont = json.loads(json_contents[i])
+        
+        contents = await file.read()
+        
+        form_dict = FormData()
+        
+        form_dict.add_field("company_id", company_id)
+        form_dict.add_field("shape", shape)
+        form_dict.add_field("context", context)
+        
+        form_dict.add_field('file', contents)
+        
+        form_dict.add_field("map_info", json.dumps(json_cont.get("map_info")))
+        form_dict.add_field("date", formatted_date)
+        form_dict.add_field("map_type", json_cont.get("map_type"))
+        form_dict.add_field("metrics", json.dumps(json_cont.get("metrics")))
+
+        response = await Api.image_upload_test1(access_token=token, form=form_dict, company_id=company_id)
         responses.append(response)
     
     for response in responses:
