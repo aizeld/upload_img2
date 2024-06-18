@@ -6,8 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from aiohttp import FormData
 from datetime import datetime 
-
-
+import transform_json
 # Настройка 
 app = FastAPI()
 
@@ -104,6 +103,14 @@ async def upload_test(request : Request, files : list[UploadFile] = File(...), t
         
         json_cont = json.loads(json_contents[i])
         
+        metrics = transform_json.transform(json_cont)
+        map_info = transform_json.extract_map_info(file.filename)
+        map_type = transform_json.extract_map_type(file.filename)
+        
+        print(map_info)
+        print(map_type)
+        print(metrics)
+                
         contents = await file.read()
         
         form_dict = FormData()
@@ -114,11 +121,11 @@ async def upload_test(request : Request, files : list[UploadFile] = File(...), t
         
         form_dict.add_field('file', contents)
         
-        form_dict.add_field("map_info", json.dumps(json_cont.get("map_info")))
+        form_dict.add_field("map_info", json.dumps(map_info))
         form_dict.add_field("date", formatted_date)
-        form_dict.add_field("map_type", json_cont.get("map_type"))
-        form_dict.add_field("metrics", json.dumps(json_cont.get("metrics")))
-
+        form_dict.add_field("map_type", map_type)
+        form_dict.add_field("metrics", json.dumps(metrics))
+        
         response = await Api.image_upload_test1(access_token=token, form=form_dict, company_id=company_id)
         responses.append(response)
     
@@ -134,10 +141,39 @@ async def upload_test(request : Request, files : list[UploadFile] = File(...), t
 async def upload(request : Request, files : list[UploadFile] = File(...), token: str = Depends(get_current_user)):
     form = await request.form() 
     responses = []
-    for file in files:
-        contents = await file.read()
+    json_contents = json.loads(form.get("json"))
+    company_id=form.get('company_id')
+    
+    context = form.get("context")
+    shape = form.get("shape")
+    
+    
+    
+    curr_date = datetime.now()
+    formatted_date = curr_date.strftime("%Y-%m-%d")
+
+    for i, file in enumerate(files):
         print(file.filename)
-        response = await Api.image_upload(access_token=token, form=form, file = contents)
+        print(json_contents[i])
+        
+        json_cont = json.loads(json_contents[i])
+        
+        contents = await file.read()
+        
+        form_dict = FormData()
+        
+        form_dict.add_field("company_id", company_id)
+        form_dict.add_field("shape", shape)
+        form_dict.add_field("context", context)
+        
+        form_dict.add_field('file', contents)
+        
+        form_dict.add_field("map_info", json.dumps(json_cont.get("map_info")))
+        form_dict.add_field("date", formatted_date)
+        form_dict.add_field("map_type", json_cont.get("map_type"))
+        form_dict.add_field("metrics", json.dumps(json_cont.get("metrics")))
+        
+        response = await Api.image_upload_test1(access_token=token, form=form_dict, company_id=company_id)
         responses.append(response)
     
     for response in responses:
@@ -146,7 +182,7 @@ async def upload(request : Request, files : list[UploadFile] = File(...), token:
             return JSONResponse(content={"error": response['message']}, status_code=response["status_code"])
             
     print(responses[-1]["message"], responses[-1]["status_code"])
-    return JSONResponse(content = responses[-1]["message"], status_code = responses[-1]["status_code"])
+    return JSONResponse(content = responses[-1]["message"], status_code = responses[-1]["status_code"]) 
 
 
 
@@ -166,5 +202,5 @@ async def get_field(company_id:str ,token : str = Depends(get_current_user)):
 
 # Запуск 
 if __name__ == "__main__":
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    uvicorn.run(app, host="0.0.0.0", port=8000, log_level = "debug", workers = 4)
     

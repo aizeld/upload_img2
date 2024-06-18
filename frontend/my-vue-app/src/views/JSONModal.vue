@@ -23,7 +23,7 @@
   </template>
   
   <script setup>
-  import { ref, watch, defineProps, defineEmits } from 'vue';
+  import { ref, watch, defineEmits } from 'vue';
   
   // Define the props the component will receive
   const props = defineProps({

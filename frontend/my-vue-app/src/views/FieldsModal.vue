@@ -6,18 +6,19 @@
             
               <h5 class="modal-title" id="fieldsModalLabel">Fields Data</h5>
               <div class="ms-auto d-flex align-items-center">
+                <input type="text" v-model="searchField" placeholder="...field_id " class="form-control me-2">
                 <button type="button" class="btn btn-primary me-2" @click="selectAll">Select All</button>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                <button type="button" class="btn-close me-2" data-bs-dismiss="modal" aria-label="Close"></button>
               </div>
 
           </div>
           <div class="modal-body">
-            <div v-if="fields">
+            <div v-if="filterField.length">
               <div class="row">
                 <div class="col">
                   <ul class="list-group">
                     <li
-                      v-for="field in fields"
+                      v-for="field in filterField"
                       :key="field.id"
                       class="list-group-item"
                       :class="{ 'list-group-item-primary': selectedField === field }"
@@ -53,13 +54,16 @@
   </template>
   
   <script setup>
-  import { ref, watch } from 'vue';
+  import { ref, watch, computed } from 'vue';
   import { Modal } from 'bootstrap';
   
   const props = defineProps(['fields']);
   const modalInstance = ref(null);
   const selectedField = ref(null);
   const emit = defineEmits(['fieldSelected']);
+  const searchField = ref("")
+  
+
 
   
   watch(() => props.fields, () => {
@@ -67,6 +71,16 @@
       modalInstance.value.show();
     }
   });
+
+
+  const filterField = computed (()=>{
+    if (!props.fields) return [];
+    if(!searchField.value) return props.fields
+   
+    return props.fields.filter(field=>field.id.toString().includes(searchField.value))
+  })
+
+
   
   const show = async () => {
     if (!modalInstance.value) {
@@ -80,12 +94,14 @@
     if (modalInstance.value){
       modalInstance.value.hide()
       selectedField.value = null;
+      searchField.value = null
     }
   }
   
   const hide = () => {
     if (modalInstance.value) {
       modalInstance.value.hide();
+      searchField.value = null
     }
   };
   const selectAll = () => {
@@ -100,6 +116,7 @@
     if (selectedField.value) {
       hide();
       emit('fieldSelected', selectedField.value);
+      searchField.value = null
     }
   };
   
